@@ -9,31 +9,25 @@ import RPi.GPIO as GPIO
 import time
 
 
-class motor_control(object):
-    def __init__(self, r1_pin=16, r2_pin=18, l1_pin=11, l2_pin=13, delay=0.1, dc_level=80, balance=1.0):
-        self.r1_pin = r1_pin
-        self.r2_pin = r2_pin
-        self.l1_pin = l1_pin
-        self.l2_pin = l2_pin
+class MotorControl(object):
+    def __init__(self, control_pin=[16, 18, 11, 13], delay=0.1, dc_level=80, balance=1.0, pwm_freq=500):
+        self.control_pin = control_pin
         self.delay = delay
         self.balance = balance
-        self.l_level = dc_level*2/(balance + 1)
-        self.r_level = self.l_level*balance
+        self.l_level = dc_level * 2 / (balance + 1)
+        self.r_level = self.l_level * balance
 
         GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(r1_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(r2_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(l1_pin, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(l2_pin, GPIO.OUT, initial=GPIO.LOW)
+        [GPIO.setup(control_pin[pin], GPIO.OUT, initial=GPIO.LOW) for pin in range(4)]
 
-        self.pwm_r1 = GPIO.PWM(r1_pin, 500)
-        self.pwm_r2 = GPIO.PWM(r2_pin, 500)
-        self.pwm_l1 = GPIO.PWM(l1_pin, 500)
-        self.pwm_l2 = GPIO.PWM(l2_pin, 500)
+        self.pwm_r1 = GPIO.PWM(control_pin[0], pwm_freq)
+        self.pwm_r2 = GPIO.PWM(control_pin[1], pwm_freq)
+        self.pwm_l1 = GPIO.PWM(control_pin[2], pwm_freq)
+        self.pwm_l2 = GPIO.PWM(control_pin[3], pwm_freq)
         self.pwm_r1.start(0)
         self.pwm_r2.start(0)
         self.pwm_l1.start(0)
-        self.pwm_l1.start(0)
+        self.pwm_l2.start(0)
 
     def stop(self):
         self.pwm_r1.ChangeDutyCycle(0)
@@ -41,44 +35,73 @@ class motor_control(object):
         self.pwm_l1.ChangeDutyCycle(0)
         self.pwm_l2.ChangeDutyCycle(0)
 
-    def forward(self):
-        self.pwm_r1.ChangeDutyCycle(self.dc_level)
+    def forward(self, speed=1.0, t=None):
+        self.pwm_r1.ChangeDutyCycle(self.r_level*speed)
         self.pwm_r2.ChangeDutyCycle(0)
-        self.pwm_l1.ChangeDutyCycle(self.dc_level)
+        self.pwm_l1.ChangeDutyCycle(self.l_level*speed)
         self.pwm_l2.ChangeDutyCycle(0)
-        time.sleep(self.delay)
+        if t is None:
+            time.sleep(self.delay)
+        else:
+            time.sleep(t)
         self.stop()
 
-    def backward():
-        pwm_r1.ChangeDutyCycle(0)
-        pwm_r2.ChangeDutyCycle(dc)
-        pwm_l1.ChangeDutyCycle(0)
-        pwm_l2.ChangeDutyCycle(dc)
-        time.sleep(t)
-        stop()
+    def backward(self, speed=0.8, t=None):
+        self.pwm_r1.ChangeDutyCycle(0)
+        self.pwm_r2.ChangeDutyCycle(self.r_level*speed)
+        self.pwm_l1.ChangeDutyCycle(0)
+        self.pwm_l2.ChangeDutyCycle(self.l_level*speed)
+        if t is None:
+            time.sleep(self.delay)
+        else:
+            time.sleep(t)
+        self.stop()
 
-    def turnLeft():
-        pwm_r1.ChangeDutyCycle(dc)
-        pwm_r2.ChangeDutyCycle(0)
-        pwm_l1.ChangeDutyCycle(0)
-        pwm_l2.ChangeDutyCycle(0)
-        time.sleep(t)
-        stop()
+    def turn_left(self, speed=0.6, t=None):
+        self.pwm_r1.ChangeDutyCycle(self.r_level*speed)
+        self.pwm_r2.ChangeDutyCycle(0)
+        self.pwm_l1.ChangeDutyCycle(0)
+        self.pwm_l2.ChangeDutyCycle(0)
+        if t is None:
+            time.sleep(self.delay)
+        else:
+            time.sleep(t)
+        self.stop()
 
-    def turnRight():
-        pwm_r1.ChangeDutyCycle(0)
-        pwm_r2.ChangeDutyCycle(0)
-        pwm_l1.ChangeDutyCycle(dc)
-        pwm_l2.ChangeDutyCycle(0)
-        time.sleep(t)
-        stop()
+    def turn_right(self, speed=0.6, t=None):
+        self.pwm_r1.ChangeDutyCycle(0)
+        self.pwm_r2.ChangeDutyCycle(0)
+        self.pwm_l1.ChangeDutyCycle(self.l_level*speed)
+        self.pwm_l2.ChangeDutyCycle(0)
+        if t is None:
+            time.sleep(self.delay)
+        else:
+            time.sleep(t)
+        self.stop()
 
+    def arbitrary_speed(self, speed=[1.0, 1.0], t=None):
+        if 0 < speed[0]:
+            self.pwm_r1.ChangeDutyCycle(self.r_level * speed[0])
+            self.pwm_r2.ChangeDutyCycle(0)
+        elif speed[0] < 0:
+            self.pwm_r1.ChangeDutyCycle(0)
+            self.pwm_r2.ChangeDutyCycle(self.r_level * speed[0])
+        if 0 < speed[1]:
+            self.pwm_l1.ChangeDutyCycle(self.l_level * speed[1])
+            self.pwm_l2.ChangeDutyCycle(0)
+        elif speed[1] < 0:
+            self.pwm_l1.ChangeDutyCycle(0)
+            self.pwm_l2.ChangeDutyCycle(self.l_level * speed[1])
+        if t is None:
+            return
+        else:
+            time.sleep(t)
+            self.stop()
 
-    def cleanup():
-        stop()
-        pwm_r1.stop()
-        pwm_r2.stop()
-        pwm_l1.stop()
-        pwm_l2.stop()
+    def cleanup(self):
+        self.stop()
+        self.pwm_r1.stop()
+        self.pwm_r2.stop()
+        self.pwm_l1.stop()
+        self.pwm_l2.stop()
         GPIO.cleanup()
-
