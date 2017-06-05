@@ -10,9 +10,9 @@ import time
 
 
 class MotorControl(object):
-    def __init__(self, control_pin=[16, 18, 11, 13], delay=0.1, dc_level=80, balance=1.0, pwm_freq=500):
+    def __init__(self, control_pin=[16, 18, 11, 13], t=0.1, dc_level=80, balance=1.0, pwm_freq=500):
         self.control_pin = control_pin
-        self.delay = delay
+        self.t = t
         self.balance = balance
         self.l_level = dc_level * 2 / (balance + 1)
         self.r_level = self.l_level * balance
@@ -41,7 +41,7 @@ class MotorControl(object):
         self.pwm_l1.ChangeDutyCycle(self.l_level*speed)
         self.pwm_l2.ChangeDutyCycle(0)
         if t is None:
-            time.sleep(self.delay)
+            time.sleep(self.t)
         else:
             time.sleep(t)
         self.stop()
@@ -52,7 +52,7 @@ class MotorControl(object):
         self.pwm_l1.ChangeDutyCycle(0)
         self.pwm_l2.ChangeDutyCycle(self.l_level*speed)
         if t is None:
-            time.sleep(self.delay)
+            time.sleep(self.t)
         else:
             time.sleep(t)
         self.stop()
@@ -63,7 +63,7 @@ class MotorControl(object):
         self.pwm_l1.ChangeDutyCycle(0)
         self.pwm_l2.ChangeDutyCycle(0)
         if t is None:
-            time.sleep(self.delay)
+            time.sleep(self.t)
         else:
             time.sleep(t)
         self.stop()
@@ -74,7 +74,7 @@ class MotorControl(object):
         self.pwm_l1.ChangeDutyCycle(self.l_level*speed)
         self.pwm_l2.ChangeDutyCycle(0)
         if t is None:
-            time.sleep(self.delay)
+            time.sleep(self.t)
         else:
             time.sleep(t)
         self.stop()
